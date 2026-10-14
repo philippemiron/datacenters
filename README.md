@@ -20,7 +20,6 @@ An interactive web application mapping operational, under-construction, and plan
   - Geographic coordinates & city/state
   - Cooling architecture (e.g., closed-loop chilled water, direct-to-chip liquid cooling)
   - Source links & documentation notes
-- **Add New Campuses**: Interactive form modal to test and add new facilities to the active session.
 - **Export & Download**: Export dataset to formatted JSON or copy to clipboard for external analysis.
 - **Zero API Key Requirement**: Uses free, public tile layers and open web standards without third-party API key configurations.
 
@@ -101,6 +100,17 @@ The dataset is stored in [`data.json`](data.json) as an array of facility object
 | `cooling` | `string` | Cooling infrastructure / heat rejection design |
 | `notes` | `string` | Summary notes, connectivity, or regional significance |
 | `sourceUrl` | `string` | Public news release or infrastructure reference |
+
+---
+
+## Contributing & Adding Data Centers
+
+To permanently add new facilities or update existing records:
+
+1. Fork this repository.
+2. Add your facility entry to [`data.json`](data.json) adhering to the schema above (include reliable source URLs such as utility filings, local zoning permits, or official operator announcements).
+3. Test locally using a lightweight server (e.g., `python3 -m http.server`).
+4. Submit a Pull Request.
 
 ---
 

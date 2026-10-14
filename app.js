@@ -211,49 +211,7 @@ function setupEventListeners() {
 
   document.getElementById('drawer-close-btn').addEventListener('click', closeMetadataDrawer);
 
-  const addModal = document.getElementById('add-modal');
-  document.getElementById('btn-add-modal').addEventListener('click', () => {
-    addModal.classList.add('open');
-  });
-  document.getElementById('modal-close-btn').addEventListener('click', () => {
-    addModal.classList.remove('open');
-  });
-  document.getElementById('btn-cancel-modal').addEventListener('click', () => {
-    addModal.classList.remove('open');
-  });
 
-  document.getElementById('add-dc-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const cityState = document.getElementById('inp-citystate').value.split(',');
-    const city = cityState[0] ? cityState[0].trim() : '';
-    const state = cityState[1] ? cityState[1].trim() : '';
-
-    const newDC = {
-      id: 'dc-user-' + Date.now(),
-      name: document.getElementById('inp-name').value,
-      operator: document.getElementById('inp-operator').value,
-      developer: document.getElementById('inp-operator').value,
-      status: document.getElementById('inp-status').value,
-      lat: parseFloat(document.getElementById('inp-lat').value),
-      lng: parseFloat(document.getElementById('inp-lng').value),
-      city: city || 'City',
-      state: state || 'State',
-      country: 'USA',
-      powerCapacityMW: parseFloat(document.getElementById('inp-power').value),
-      sqft: 0,
-      completionYear: parseInt(document.getElementById('inp-year').value) || null,
-      notes: document.getElementById('inp-notes').value || 'Added via interactive tracker.',
-      sourceUrl: document.getElementById('inp-url').value || '#'
-    };
-
-    DATA_CENTERS.unshift(newDC);
-    renderStats();
-    renderMarkers();
-    openMetadataDrawer(newDC);
-
-    addModal.classList.remove('open');
-    document.getElementById('add-dc-form').reset();
-  });
 
   const exportModal = document.getElementById('export-modal');
   const showExport = () => {
