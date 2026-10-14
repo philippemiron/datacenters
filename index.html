@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Center Tracker — Construction & Global Pipeline</title>
+  <meta name="description"
+    content="Interactive tracker mapping operational, under-construction, and planned data center campuses.">
+
+  <!-- Leaflet CSS for Map Tiles -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+</head>
+
+<body>
+
+  <!-- Top Navigation & Stats Bar -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <h1>Data Center Buildout Tracker</h1>
+        <span>Live map of operational, active construction & pipeline sites</span>
+      </div>
+    </div>
+
+    <!-- Live Aggregated Metrics -->
+    <div class="metric-badges">
+      <div class="metric-pill">
+        <span>Facilities:</span>
+        <strong id="stat-total">0</strong>
+      </div>
+      <div class="metric-pill">
+        <span class="status-dot dot-op"></span>
+        <span>Operating:</span>
+        <strong id="stat-op-mw">0 MW</strong>
+      </div>
+      <div class="metric-pill">
+        <span class="status-dot dot-con"></span>
+        <span>In Construction:</span>
+        <strong id="stat-con-mw">0 MW</strong>
+      </div>
+      <div class="metric-pill">
+        <span class="status-dot dot-plan"></span>
+        <span>Pipeline:</span>
+        <strong id="stat-plan-mw">0 MW</strong>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn" id="btn-export-json">💾 Export Data</button>
+      <button class="btn btn-primary" id="btn-add-modal">+ Add Location</button>
+    </div>
+  </header>
+
+  <!-- App Body -->
+  <div class="app-container">
+
+    <!-- Map Container -->
+    <div id="map-container">
+      <div id="map"></div>
+
+      <!-- Controls Overlay: Search & Filter -->
+      <div class="map-controls-overlay">
+        <div class="map-controls-card">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="search-input" placeholder="Search by name, operator (AWS, Meta...), or city...">
+          </div>
+
+          <div class="filter-chips">
+            <button class="filter-chip active" data-status="all">All (<span id="count-all">0</span>)</button>
+            <button class="filter-chip" data-status="operational">
+              <span class="status-dot dot-op"></span> Operational (<span id="count-op">0</span>)
+            </button>
+            <button class="filter-chip" data-status="construction">
+              <span class="status-dot dot-con"></span> In Construction (<span id="count-con">0</span>)
+            </button>
+            <button class="filter-chip" data-status="planned">
+              <span class="status-dot dot-plan"></span> Planned (<span id="count-plan">0</span>)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="map-legend">
+        <div class="legend-title">Construction Status</div>
+        <div class="legend-item"><span class="status-dot dot-op"></span> Operational Facility</div>
+        <div class="legend-item"><span class="status-dot dot-con"></span> Under Construction</div>
+        <div class="legend-item"><span class="status-dot dot-plan"></span> Planned / In Permitting</div>
+        <div style="margin-top: 6px; font-size: 0.68rem; color: #94a3b8;">
+          * Circle radius scales with MW capacity
+        </div>
+      </div>
+    </div>
+
+    <!-- Metadata Details Drawer (Side Panel) -->
+    <aside class="details-drawer closed" id="details-drawer">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <span class="status-badge" id="drawer-badge">Operational</span>
+          <h2 id="drawer-title">Facility Name</h2>
+          <span id="drawer-operator" style="font-size: 0.85rem; color: #94a3b8;">Operator</span>
+        </div>
+        <button class="drawer-close-btn" id="drawer-close-btn" title="Close Details">&times;</button>
+      </div>
+
+      <div class="drawer-content">
+        <!-- Capacity & Size Specs -->
+        <div class="spec-grid">
+          <div class="spec-card">
+            <div class="spec-label">Power Capacity</div>
+            <div class="spec-value" id="drawer-capacity">0 MW</div>
+          </div>
+          <div class="spec-card">
+            <div class="spec-label">Floor Area</div>
+            <div class="spec-value" id="drawer-sqft">0 sq ft</div>
+          </div>
+          <div class="spec-card">
+            <div class="spec-label">Announced</div>
+            <div class="spec-value" id="drawer-announced">—</div>
+          </div>
+          <div class="spec-card">
+            <div class="spec-label">Online / Target</div>
+            <div class="spec-value" id="drawer-completion">—</div>
+          </div>
+        </div>
+
+        <!-- Location & Operator Details -->
+        <div class="meta-list">
+          <div class="meta-row">
+            <span>Location:</span>
+            <span id="drawer-location">City, State</span>
+          </div>
+          <div class="meta-row">
+            <span>Coordinates:</span>
+            <span id="drawer-coords">0.000, 0.000</span>
+          </div>
+          <div class="meta-row">
+            <span>Developer / REIT:</span>
+            <span id="drawer-developer">—</span>
+          </div>
+          <div class="meta-row">
+            <span>Cooling Design:</span>
+            <span id="drawer-cooling">—</span>
+          </div>
+        </div>
+
+        <!-- Notes / Strategic Context -->
+        <div>
+          <div class="spec-label" style="margin-bottom: 0.4rem;">Project Highlights</div>
+          <div class="notes-box" id="drawer-notes">
+            Project details and strategic context.
+          </div>
+        </div>
+
+        <!-- Link Out -->
+        <div class="source-action">
+          <a href="#" target="_blank" rel="noopener noreferrer" id="drawer-source-link">
+            Open Source / Regulatory Filing ↗
+          </a>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Modal: Add New Location / Export JSON -->
+  <div class="modal-backdrop" id="add-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Add Data Center Location</h3>
+        <button class="drawer-close-btn" id="modal-close-btn">&times;</button>
+      </div>
+      <form id="add-dc-form">
+        <div class="modal-body">
+          <p style="font-size: 0.85rem; color: #94a3b8;">
+            Enter details for a new facility. It will immediately appear on your interactive map, and you can export the updated dataset.
+          </p>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Facility Name *</label>
+              <input type="text" class="form-input" id="inp-name" required placeholder="e.g. AWS Columbus Campus">
+            </div>
+            <div class="form-group">
+              <label>Operator / Hyperscaler *</label>
+              <input type="text" class="form-input" id="inp-operator" required
+                placeholder="e.g. AWS, Microsoft, Vantage">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Status *</label>
+              <select class="form-select" id="inp-status" required>
+                <option value="operational">Operational</option>
+                <option value="construction">In Construction</option>
+                <option value="planned">Planned / Proposed</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Power Capacity (MW) *</label>
+              <input type="number" class="form-input" id="inp-power" required placeholder="e.g. 150">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Latitude *</label>
+              <input type="number" step="any" class="form-input" id="inp-lat" required placeholder="e.g. 39.0438">
+            </div>
+            <div class="form-group">
+              <label>Longitude *</label>
+              <input type="number" step="any" class="form-input" id="inp-lng" required placeholder="e.g. -77.4874">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>City & State *</label>
+              <input type="text" class="form-input" id="inp-citystate" required placeholder="e.g. Ashburn, Virginia">
+            </div>
+            <div class="form-group">
+              <label>Estimated Completion Year</label>
+              <input type="number" class="form-input" id="inp-year" placeholder="e.g. 2026">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Project Notes / Scope</label>
+            <textarea class="form-textarea" rows="2" id="inp-notes"
+              placeholder="e.g. 4-building AI campus powered by nearby nuclear facility..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Source URL (Permit filing / News)</label>
+            <input type="url" class="form-input" id="inp-url" placeholder="https://...">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn" id="btn-cancel-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add & Plot on Map</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Export JSON -->
+  <div class="modal-backdrop" id="export-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="export-modal-title">Export Dataset</h3>
+        <button class="drawer-close-btn" id="export-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: #94a3b8;">
+          Below is your current dataset. You can copy this JSON to paste into <code>data.json</code> or download it directly:
+        </p>
+
+        <div class="json-code-box" id="json-code-output"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btn-copy-json">📋 Copy JSON</button>
+        <button class="btn btn-primary" id="btn-download-json">⬇️ Download data.json</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
