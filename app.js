@@ -42,9 +42,14 @@ function init() {
 
 function initMap() {
   try {
+    const worldBounds = L.latLngBounds([-85, -180], [85, 180]);
+
     map = L.map('map', {
       center: [39.8283, -98.5795],
       zoom: 4,
+      minZoom: 3,
+      maxBounds: worldBounds,
+      maxBoundsViscosity: 1.0,
       zoomControl: false
     });
 
@@ -54,12 +59,16 @@ function initMap() {
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
       maxNativeZoom: 16,
-      maxZoom: 19
+      maxZoom: 19,
+      noWrap: true,
+      bounds: worldBounds
     }).addTo(map);
 
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 16,
-      maxZoom: 19
+      maxZoom: 19,
+      noWrap: true,
+      bounds: worldBounds
     }).addTo(map);
 
     markersLayer = L.layerGroup().addTo(map);

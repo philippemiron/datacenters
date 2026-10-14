@@ -39,19 +39,20 @@ An interactive web application mapping operational, under-construction, and plan
 
 Because the application fetches [`data.json`](data.json) dynamically using the Fetch API, modern browsers block cross-origin requests over the `file://` protocol. The application should be served via a local HTTP server.
 
-### Option 1: Python (Built-in)
+### Option 1: Node.js (Built-in Server)
 
 ```bash
-# Python 3
+npm start
+# or: node server.js
+```
+Then open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Option 2: Python (Built-in)
+
+```bash
 python3 -m http.server 8000
 ```
 Then open [http://localhost:8000](http://localhost:8000) in your browser.
-
-### Option 2: Node.js (npx)
-
-```bash
-npx serve .
-```
 
 ### Option 3: VS Code / IDE Live Server
 Right-click on [`index.html`](index.html) and select **Open with Live Server**.
@@ -119,8 +120,10 @@ To permanently add new facilities or update existing records:
 ```text
 ├── index.html     # Application layout, UI overlays, modals, and Leaflet setup
 ├── styles.css     # Dark-theme styling, glassmorphism cards, and responsive drawer
-├── app.js         # Map initialization, data rendering, search/filter, and modal handlers
+├── app.js         # Map initialization, data rendering, and search/filter handlers
 ├── data.json      # Structured global data center facility records
+├── server.js      # Zero-dependency local Node.js HTTP server
+├── package.json   # Project metadata and npm start script
 └── LICENSE        # GNU General Public License v3.0
 ```
 

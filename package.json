@@ -1,0 +1,15 @@
+{
+  "name": "datacenter-tracker",
+  "version": "1.0.0",
+  "description": "Interactive tracker mapping operational, under-construction, and planned data center campuses.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "datacenter",
+    "leaflet",
+    "map"
+  ],
+  "license": "GPL-3.0"
+}
